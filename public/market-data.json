@@ -1,0 +1,15 @@
+{
+  "updated": "2026-09-12",
+  "indices": [
+    {
+      "name": "NIFTY 50",
+      "value": 24850,
+      "change": "+0.8%"
+    },
+    {
+      "name": "SENSEX",
+      "value": 81200,
+      "change": "+0.6%"
+    }
+  ]
+}

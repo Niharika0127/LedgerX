@@ -1,0 +1,1 @@
+export async function getMarketSnapshot(){try{const response=await fetch("/market-data.json");if(!response.ok) throw new Error("Market data unavailable");return await response.json();}catch(error){console.error("Market data error:",error);return null;}}
