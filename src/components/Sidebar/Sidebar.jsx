@@ -20,7 +20,7 @@ function Sidebar({ activePage }) {
             </div>
             <div className="sidebar-bottom">
                 <a href="/settings" className={`sidebar-link ${activePage==="settings"?"active":""}`}><span>⚙️</span>Settings</a>
-                <a href="/" className="sidebar-link logout-link"><span>↪</span>Log out</a>
+                <a href="/logout" className="sidebar-link logout-link"><span>↪</span>Log out</a>
             </div>
         </aside>
     );

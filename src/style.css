@@ -3063,3 +3063,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
         text-align:center;
     }
 }
+/* Phase 2 auth/onboarding improvements */
+.text-link { border: 0; background: transparent; color: #7454d9; cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
+.form-feedback { border-radius: 10px; padding: 11px 13px; margin: 14px 0 0; font-size: 12px; line-height: 1.5; }
+.error-feedback { background: #fff0f0; border: 1px solid #f2b8b8; color: #9f2626; }
+.success-feedback { background: #edfff5; border: 1px solid #b7e9cc; color: #17653a; }
+.auth-demo-note { color: #66778a; font-size: 11px; line-height: 1.6; margin: 12px 0; text-align: center; }
+.onboarding-progress-bar div { transition: width .22s ease; }
+.onboarding-goal-intro { color: #66778a; font-size: 12px; margin: 0 0 16px; }
+.onboarding-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.onboarding-back { border: 1px solid rgba(24,35,51,.18); background: rgba(255,255,255,.7); color: #354258; border-radius: 10px; min-height: 44px; padding: 0 22px; cursor: pointer; font-weight: 600; }
+.onboarding-submit { cursor: pointer; }
+.not-found-page { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; color: #182333; }
+.not-found-code { font-size: clamp(72px, 15vw, 150px); font-weight: 800; line-height: 1; letter-spacing: -.07em; background: linear-gradient(90deg,#7454d9,#526de0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.not-found-page h1 { font-size: clamp(28px, 5vw, 42px); margin: 20px 0 10px; }
+.not-found-page p { color: #66778a; font-size: 14px; margin-bottom: 24px; }
+.not-found-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 10px; background: #7454d9; color: white; text-decoration: none; font-weight: 600; }
+@media (max-width: 640px) { .onboarding-card { padding: 22px 16px; } .onboarding-grid { grid-template-columns: 1fr; } .onboarding-bottom { gap: 16px; align-items: stretch; flex-direction: column; } .onboarding-actions { width: 100%; } .onboarding-actions button { flex: 1; } .register-form-row { grid-template-columns: 1fr; } }
