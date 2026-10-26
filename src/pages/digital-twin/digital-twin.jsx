@@ -1,140 +1,17 @@
 import { useEffect } from "react";
-import { initLegacyApp } from "../../services/legacyApp.jsx";
-import Sidebar from "../../components/Sidebar/Sidebar.jsx";
-
-function Page() {
-  useEffect(() => {
-    document.body.className = "dashboard-page";
-    const timer = window.setTimeout(() => initLegacyApp(), 0);
-    return () => {
-        window.clearTimeout(timer);
-        document.body.className = "";
-    };
-  }, []);
-  return (
-    <div className="dashboard-page"><Sidebar activePage="digital-twin" />
-      <main className="dashboard-main">
-  <header className="dashboard-header">
-    <div>
-      <p className="dashboard-date">AI PROFILE & BEHAVIORAL MODEL</p>
-      <h1>
-        Digital
-        <span>Twin</span>
-        🧬
-      </h1>
-    </div>
-    <div className="dashboard-profile"><div className="notification">🔔</div></div>
-  </header>
-  {/* Twin Health & Status Cards */}
-  <section className="dashboard-summary">
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>MODEL ACCURACY</span>
-        <span className="summary-icon">🎯</span>
-      </div>
-      <h2>94.8%</h2>
-      <p className="positive">Calibrated via 12 months data</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>RISK TOLERANCE</span>
-        <span className="summary-icon">⚖️</span>
-      </div>
-      <h2>Moderate</h2>
-      <p className="positive">Balanced Growth Archetype</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>SAVINGS RATE</span>
-        <span className="summary-icon">🛡️</span>
-      </div>
-      <h2>50.1%</h2>
-      <p className="positive">+4.2% higher than average</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>STRESS SCORE</span>
-        <span className="summary-icon">🟢</span>
-      </div>
-      <h2>Low (22/100)</h2>
-      <p className="positive">Healthy reserve buffer</p>
-    </div>
-  </section>
-  {/* Digital Twin Profile & Persona */}
-  <section className="dashboard-grid">
-    {/* Archetype Details */}
-    <div className="dashboard-panel">
-      <div className="panel-header">
-        <div>
-          <span className="panel-label">BEHAVIORAL MODEL</span>
-          <h3>Financial Archetype</h3>
-        </div>
-        <span className="positive">Active Sync</span>
-      </div>
-      <div style={{marginTop: "20px", display: "flex", flexDirection: "column", gap: "15px"}}>
-        <div className="simulation-result-preview"><div>
-            <span>Primary Behavior</span>
-            <strong>Disciplined Saver / Strategic Investor</strong>
-          </div></div>
-        <div className="simulation-result-preview"><div>
-            <span>Spending Temperament</span>
-            <strong>Low Impulse, Utility-Focused</strong>
-          </div></div>
-        <div className="simulation-result-preview"><div>
-            <span>Emergency Cushion</span>
-            <strong>6.2 Months of Expenses Maintained</strong>
-          </div></div>
-      </div>
-    </div>
-    {/* Trait Breakdown */}
-    <div className="dashboard-panel">
-      <div className="panel-header"><div>
-          <span className="panel-label">PARAMETER WEIGHTS</span>
-          <h3>Behavioral Breakdown</h3>
-        </div></div>
-      <div style={{marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px"}}>
-        <div>
-          <div style={{display: "flex", justifyContent: "space-between", fontSize: "11px", marginBottom: "5px"}}>
-            <span>Investment Consistency</span>
-            <strong>88%</strong>
-          </div>
-          <div className="dashboard-progress">
-            <div style={{width: "88%"}}></div>
-          </div>
-        </div>
-        <div>
-          <div style={{display: "flex", justifyContent: "space-between", fontSize: "11px", marginBottom: "5px"}}>
-            <span>Debt Aversion</span>
-            <strong>92%</strong>
-          </div>
-          <div className="dashboard-progress">
-            <div style={{width: "92%"}}></div>
-          </div>
-        </div>
-        <div>
-          <div style={{display: "flex", justifyContent: "space-between", fontSize: "11px", marginBottom: "5px"}}>
-            <span>Budget Discipline</span>
-            <strong>76%</strong>
-          </div>
-          <div className="dashboard-progress">
-            <div style={{width: "76%"}}></div>
-          </div>
-        </div>
-        <div>
-          <div style={{display: "flex", justifyContent: "space-between", fontSize: "11px", marginBottom: "5px"}}>
-            <span>Impulse Resistance</span>
-            <strong>81%</strong>
-          </div>
-          <div className="dashboard-progress">
-            <div style={{width: "81%"}}></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-    </div>
-  );
+import { useFinance } from "../../context/FinanceContext.jsx";
+import { InsightLayout, MetricCard, Panel, EmptyState } from "../../components/InsightUI.jsx";
+import { formatINR, financialHealth, percent, goalProgressDetails, recordName, phase4Calculations } from "../../utils/phase4Insights.js";
+export default function Page() {
+ const { financeData, calculations } = useFinance(); const c = phase4Calculations(financeData, calculations);
+ useEffect(()=>{document.body.className="dashboard-page";return()=>{document.body.className=""}},[]);
+ const health=financialHealth(c); const filled=Boolean(c.monthlyIncome||c.monthlyExpenses||c.totalAssets||c.totalLiabilities);
+ const debtRatio=c.totalAssets>0?c.totalLiabilities/c.totalAssets:0;
+ const profile=c.monthlySurplus<0?"Cash-flow constrained":c.savingsRatePercent>=30?"Consistent saver":c.savingsRatePercent>=10?"Building saver":"Financial profile developing";
+ return <InsightLayout activePage="digital-twin" eyebrow="YOUR FINANCIAL DIGITAL TWIN" title={<>Financial <span>Digital Twin</span></>} emoji="🧬">
+  <section className="dashboard-summary"><MetricCard label="HEALTH SCORE" value={`${health.score}/100`} detail={health.label+" · rule-based estimate"} icon="❤️"/><MetricCard label="SAVINGS RATE" value={percent(c.savingsRatePercent)} detail="Based on recorded monthly flows" icon="💰"/><MetricCard label="DEBT / ASSETS" value={percent(debtRatio*100)} detail="Lower is generally more resilient" icon="⚖️"/><MetricCard label="EMERGENCY BUFFER" value={`${c.emergencyFundMonths.toFixed(1)} months`} detail="Cash ÷ monthly expenses and loan payments" icon="🛟"/></section>
+  <section className="dashboard-grid"><Panel eyebrow="PROFILE" title="Financial archetype"><h2 style={{fontSize:24,margin:"4px 0 10px"}}>{profile}</h2><p style={{color:"#66778a",lineHeight:1.7}}>This profile is derived from the information you enter in LedgerX. It is a planning aid, not a credit rating or a professional financial assessment.</p>{!filled&&<div style={{marginTop:16}}><EmptyState title="Twin needs your data" detail="Add income, expenses, balances and liabilities to create a more useful financial snapshot."/></div>}</Panel>
+  <Panel eyebrow="LIVE MODEL" title="Current financial snapshot">{[["Net worth",c.netWorth],["Monthly income",c.monthlyIncome],["Monthly expenses",c.monthlyExpenses],["Monthly surplus after loan payments",c.monthlySurplus],["Total assets",c.totalAssets],["Total liabilities",c.totalLiabilities]].map(([label,value])=><div key={label} style={{display:"flex",justifyContent:"space-between",gap:12,padding:"10px 0",borderBottom:"1px solid rgba(24,35,51,.08)"}}><span>{label}</span><strong>{formatINR(value)}</strong></div>)}</Panel></section>
+  <Panel eyebrow="GOAL ALIGNMENT" title="How your goals are progressing">{financeData.goals.length?financeData.goals.map(goal=>{const p=goalProgressDetails(goal);return <div key={goal.id} style={{padding:"12px 0"}}><div style={{display:"flex",justifyContent:"space-between",gap:12}}><strong>{recordName(goal)}</strong><span>{p.percent.toFixed(1)}%</span></div><div className="dashboard-progress" style={{marginTop:8}}><div style={{width:`${p.percent}%`}}/></div><p style={{fontSize:12,color:"#66778a"}}>{formatINR(p.remaining)} remaining</p></div>}):<EmptyState title="No goal data yet" detail="Add goals to include goal alignment in your financial twin." link="/goals"/>}</Panel>
+ </InsightLayout>;
 }
-
-export default Page;

@@ -1,234 +1,45 @@
 import { useEffect } from "react";
-import { initLegacyApp } from "../../services/legacyApp.jsx";
-import Sidebar from "../../components/Sidebar/Sidebar.jsx";
+import { useFinance } from "../../context/FinanceContext.jsx";
+import { InsightLayout, MetricCard, Panel, EmptyState } from "../../components/InsightUI.jsx";
+import { formatINR, financialHealth, percent, recordName, formatDate, phase4Calculations, goalProgressDetails } from "../../utils/phase4Insights.js";
 
-function Page() {
-  useEffect(() => {
-    document.body.className = "dashboard-page";
-    const timer = window.setTimeout(() => initLegacyApp(), 0);
-    return () => {
-        window.clearTimeout(timer);
-        document.body.className = "";
-    };
-  }, []);
-  return (
-    <div className="dashboard-page"><Sidebar activePage="dashboard" />
-      <main className="dashboard-main">
-  <header className="dashboard-header">
-    <div>
-      <p className="dashboard-date">SUNDAY, AUGUST 30, 2026</p>
-      <h1>
-        Good morning,
-        <span>there.</span>
-        👋
-      </h1>
-    </div>
-    <div className="dashboard-profile">
-      <div className="notification">🔔</div>
-      {/* <div class="profile-avatar">
-                    U
-                </div> */}
-    </div>
-  </header>
-  <section className="dashboard-summary">
-    <div className="summary-card net-worth-card">
-      <div className="summary-card-top">
-        <span>NET WORTH</span>
-        <span className="summary-icon">💎</span>
-      </div>
-      <h2>₹12,84,500</h2>
-      <p className="positive">↑ 8.4% this year</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>MONTHLY INCOME</span>
-        <span className="summary-icon">💵</span>
-      </div>
-      <h2>₹85,000</h2>
-      <p className="positive">↑ 5.2% from last month</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>MONTHLY EXPENSES</span>
-        <span className="summary-icon">💳</span>
-      </div>
-      <h2>₹42,350</h2>
-      <p className="expense-text">49.8% of income</p>
-    </div>
-    <div className="summary-card health-card">
-      <div className="summary-card-top">
-        <span>FINANCIAL HEALTH</span>
-        <span className="summary-icon">❤️</span>
-      </div>
-      <div className="health-number">
-        82
-        <small>/100</small>
-      </div>
-      <div className="dashboard-progress"><div></div></div>
-      <p className="positive">Excellent health</p>
-    </div>
-  </section>
-  <section className="dashboard-grid">
-    <div className="dashboard-panel chart-panel">
-      <div className="panel-header">
-        <div>
-          <span className="panel-label">NET WORTH</span>
-          <h2>₹12.84L</h2>
+export default function Page() {
+  const { financeData, calculations } = useFinance();
+  const c = phase4Calculations(financeData, calculations);
+  useEffect(() => { document.body.className = "dashboard-page"; return () => { document.body.className = ""; }; }, []);
+  const health = financialHealth(c);
+  const hasRecords = c.monthlyIncome || c.monthlyExpenses || c.totalAssets || c.totalLiabilities || c.transactionCount || financeData.goals.length;
+  const recent = [...financeData.transactions].sort((a,b) => new Date(b.date || b.createdAt || 0)-new Date(a.date || a.createdAt || 0)).slice(0,5);
+  const goals = financeData.goals.slice(0,3);
+  return <InsightLayout activePage="dashboard" eyebrow={new Date().toLocaleDateString("en-IN", {weekday:"long", day:"numeric", month:"long", year:"numeric"}).toUpperCase()} title={<>Your financial <span>overview</span></>} emoji="👋">
+    <section className="dashboard-summary">
+      <MetricCard label="NET WORTH" value={formatINR(c.netWorth)} detail="Recorded assets minus liabilities" icon="💎" />
+      <MetricCard label="MONTHLY INCOME" value={formatINR(c.monthlyIncome)} detail="Normalized to monthly amounts" icon="💵" />
+      <MetricCard label="MONTHLY EXPENSES" value={formatINR(c.monthlyExpenses)} detail={`${c.monthlyIncome > 0 ? percent(c.monthlyExpenses / c.monthlyIncome * 100) : "—"} of recorded income`} icon="💳" />
+      <MetricCard label="FINANCIAL HEALTH" value={`${health.score}/100`} detail={health.label + " · based on entered records"} icon="❤️" />
+    </section>
+    <section className="dashboard-grid">
+      <Panel eyebrow="CASH FLOW" title="Monthly financial position">
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:12}}>
+          <div className="simulation-result-preview"><div><span>Monthly surplus</span><strong style={{color:c.monthlySurplus >= 0 ? "#299565" : "#b65d5d"}}>{formatINR(c.monthlySurplus)}</strong></div></div>
+          <div className="simulation-result-preview"><div><span>Savings rate</span><strong>{percent(c.savingsRatePercent)}</strong></div></div>
+          <div className="simulation-result-preview"><div><span>Cash balance</span><strong>{formatINR(c.cashBalance)}</strong></div></div>
+          <div className="simulation-result-preview"><div><span>Loan payments / month</span><strong>{formatINR(c.monthlyLoanPayments)}</strong></div></div>
         </div>
-        <select label="Net worth period" title="Net worth period">
-          <option>Last 12 months</option>
-          <option>Last 6 months</option>
-          <option>This year</option>
-        </select>
-      </div>
-      <div className="dashboard-chart">
-        <div className="chart-grid-line line-a"></div>
-        <div className="chart-grid-line line-b"></div>
-        <div className="chart-grid-line line-c"></div>
-        <svg preserveAspectRatio="none" viewBox="0 0 700 220">
-          <defs><linearGradient id="dashboardGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopOpacity=".25"></stop>
-              <stop offset="100%" stopOpacity="0"></stop>
-            </linearGradient></defs>
-          <path d="M0 180
-                               C70 170, 100 155, 145 160
-                               S210 130, 260 140
-                               S320 105, 370 120
-                               S430 80, 475 100
-                               S535 65, 580 75
-                               S650 35, 700 45
-                               L700 220
-                               L0 220 Z" fill="url(#dashboardGradient)"></path>
-          <path d="M0 180
-                               C70 170, 100 155, 145 160
-                               S210 130, 260 140
-                               S320 105, 370 120
-                               S430 80, 475 100
-                               S535 65, 580 75
-                               S650 35, 700 45" fill="none" stroke="#7454d9" strokeWidth="3"></path>
-        </svg>
-        <div className="chart-months">
-          <span>Sep</span>
-          <span>Oct</span>
-          <span>Nov</span>
-          <span>Dec</span>
-          <span>Jan</span>
-          <span>Feb</span>
-          <span>Mar</span>
-          <span>Apr</span>
-          <span>May</span>
-          <span>Jun</span>
-          <span>Jul</span>
-          <span>Aug</span>
-        </div>
-      </div>
-    </div>
-    <div className="dashboard-panel cashflow-panel">
-      <div className="panel-header">
-        <div>
-          <span className="panel-label">CASH FLOW</span>
-          <h3>This Month</h3>
-        </div>
-        <span className="cashflow-positive">+₹42,650</span>
-      </div>
-      <div className="cashflow-bars">
-        <div className="cash-bar">
-          <div className="bar income-bar" style={{height: "90%"}}></div>
-          <span>Income</span>
-        </div>
-        <div className="cash-bar">
-          <div className="bar expense-bar" style={{height: "48%"}}></div>
-          <span>Expenses</span>
-        </div>
-        <div className="cash-bar">
-          <div className="bar saving-bar" style={{height: "68%"}}></div>
-          <span>Savings</span>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section className="dashboard-bottom-grid">
-    <div className="dashboard-panel goals-dashboard">
-      <div className="panel-header">
-        <div>
-          <span className="panel-label">YOUR GOALS</span>
-          <h3>Financial Goals</h3>
-        </div>
-        <a href="/goals">View all →</a>
-      </div>
-      <div className="goal-row">
-        <div className="goal-left">
-          <div className="goal-small-icon">🚨</div>
-          <div>
-            <strong>Emergency Fund</strong>
-            <span>₹3.2L / ₹5L</span>
-          </div>
-        </div>
-        <div className="goal-progress"><div style={{width: "64%"}}></div></div>
-        <strong className="goal-percent">64%</strong>
-      </div>
-      <div className="goal-row">
-        <div className="goal-left">
-          <div className="goal-small-icon">🚗</div>
-          <div>
-            <strong>New Car</strong>
-            <span>₹4.5L / ₹8L</span>
-          </div>
-        </div>
-        <div className="goal-progress"><div style={{width: "56%"}}></div></div>
-        <strong className="goal-percent">56%</strong>
-      </div>
-      <div className="goal-row">
-        <div className="goal-left">
-          <div className="goal-small-icon">🌴</div>
-          <div>
-            <strong>Retirement</strong>
-            <span>₹18L / ₹50L</span>
-          </div>
-        </div>
-        <div className="goal-progress"><div style={{width: "36%"}}></div></div>
-        <strong className="goal-percent">36%</strong>
-      </div>
-    </div>
-    <div className="dashboard-panel ai-insight">
-      <div className="ai-icon">🤖</div>
-      <span className="panel-label">AI FINANCIAL INSIGHT</span>
-      <h3>You're on a good track.</h3>
-      <p>
-        Your savings rate is currently
-        <strong>50.2%</strong>
-        .
-                    Increasing your monthly investments
-                    by ₹5,000 could significantly improve
-                    your long-term projection.
-      </p>
-      <a className="insight-button" href="/advisor">Ask AI Advisor →</a>
-    </div>
-    <div className="dashboard-panel simulation-dashboard">
-      <div className="simulation-dashboard-top">
-        <div>
-          <span className="panel-label">SIMULATION LAB</span>
-          <h3>What if you buy a car?</h3>
-        </div>
-        <span className="simulation-icon">🧪</span>
-      </div>
-      <div className="simulation-result-preview">
-        <div>
-          <span>Current Net Worth</span>
-          <strong>₹12.84L</strong>
-        </div>
-        <span className="simulation-arrow">→</span>
-        <div>
-          <span>After 3 Years</span>
-          <strong>₹15.21L</strong>
-        </div>
-      </div>
-      <a className="simulation-button" href="/simulation">Run New Simulation</a>
-    </div>
-  </section>
-</main>
-    </div>
-  );
+        {!hasRecords && <div style={{marginTop:16}}><EmptyState title="Your financial picture starts here" detail="This dashboard intentionally starts without sample financial figures. Add your own records to populate it." /></div>}
+      </Panel>
+      <Panel eyebrow="BALANCE SHEET" title="Assets & liabilities">
+        {[ ["Cash", c.cashBalance], ["Other assets", c.otherAssets], ["Investments", c.investmentValue], ["Liabilities", -c.totalLiabilities] ].map(([label,value]) => <div key={label} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(24,35,51,.08)"}}><span>{label}</span><strong style={{color:value<0?"#b65d5d":"#182333"}}>{formatINR(value)}</strong></div>)}
+      </Panel>
+    </section>
+    <section className="dashboard-grid">
+      <Panel eyebrow="YOUR GOALS" title="Goal progress">
+        {goals.length ? goals.map(goal => { const p=goalProgressDetails(goal); return <div key={goal.id} style={{marginBottom:16}}><div style={{display:"flex",justifyContent:"space-between",gap:12}}><strong>{recordName(goal)}</strong><span>{p.percent.toFixed(0)}%</span></div><p style={{fontSize:12,color:"#66778a",margin:"5px 0"}}>{formatINR(p.saved)} of {formatINR(p.target)}</p><div className="dashboard-progress"><div style={{width:`${p.percent}%`}} /></div></div>; }) : <EmptyState title="No goals added yet" detail="Create a goal to track progress here." link="/goals" />}
+        <a href="/goals" className="simulation-button">Manage goals →</a>
+      </Panel>
+      <Panel eyebrow="RECENT ACTIVITY" title="Latest transactions">
+        {recent.length ? recent.map(item => <div key={item.id} className="simulation-result-preview"><div><strong>{recordName(item)}</strong><p style={{fontSize:12,color:"#66778a",marginTop:4}}>{formatDate(item.date || item.createdAt)}</p></div><strong style={{color:item.type === "income" ? "#299565" : "#182333"}}>{item.type === "income" ? "+" : item.type === "expense" ? "−" : ""}{formatINR(item.amount)}</strong></div>) : <EmptyState title="No transactions recorded" detail="Your latest transactions will appear here once you add them." />}
+      </Panel>
+    </section>
+  </InsightLayout>;
 }
-
-export default Page;
