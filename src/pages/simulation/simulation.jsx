@@ -1,131 +1,23 @@
-import { useEffect } from "react";
-import { initLegacyApp } from "../../services/legacyApp.jsx";
-import Sidebar from "../../components/Sidebar/Sidebar.jsx";
-
-function Page() {
-  useEffect(() => {
-    document.body.className = "dashboard-page";
-    const timer = window.setTimeout(() => initLegacyApp(), 0);
-    return () => {
-        window.clearTimeout(timer);
-        document.body.className = "";
-    };
-  }, []);
-  return (
-    <div className="dashboard-page"><Sidebar activePage="simulation" />
-      <main className="dashboard-main">
-  <header className="dashboard-header">
-    <div>
-      <p className="dashboard-date">MONTE CARLO & SCENARIO TESTING</p>
-      <h1>
-        Simulation
-        <span>Lab</span>
-        🧪
-      </h1>
-    </div>
-    <div className="dashboard-profile"><div className="notification">🔔</div></div>
-  </header>
-  {/* Active Scenario Metrics */}
-  <section className="dashboard-summary">
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>SIMULATED NET WORTH (5 YR)</span>
-        <span className="summary-icon">📈</span>
-      </div>
-      <h2>₹38,20,000</h2>
-      <p className="positive">+163% base growth projected</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>SUCCESS PROBABILITY</span>
-        <span className="summary-icon">🎲</span>
-      </div>
-      <h2>87.4%</h2>
-      <p className="positive">Based on 1,000 runs</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>MAX DRAWDOWN RISK</span>
-        <span className="summary-icon">📉</span>
-      </div>
-      <h2>-18.2%</h2>
-      <p className="expense-text">Under severe crash mode</p>
-    </div>
-    <div className="summary-card">
-      <div className="summary-card-top">
-        <span>RECOVERY TIME</span>
-        <span className="summary-icon">⏱️</span>
-      </div>
-      <h2>11 Months</h2>
-      <p className="positive">Estimated liquidity cushion</p>
-    </div>
-  </section>
-  {/* Interactive Simulation Controls */}
-  <section className="dashboard-grid">
-    {/* Scenario Controls */}
-    <div className="dashboard-panel">
-      <div className="panel-header"><div>
-          <span className="panel-label">PARAMETERS</span>
-          <h3>Run Custom Stress Test</h3>
-        </div></div>
-      <div style={{marginTop: "20px", display: "flex", flexDirection: "column", gap: "18px"}}>
-        <div>
-          <div style={{display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px"}}>
-            <span>Market Correction Drop (%)</span>
-            <strong>-20%</strong>
-          </div>
-          <input max="50" min="0" style={{width: "100%", accentColor: "#00f2fe"}} type="range" value="20" />
-        </div>
-        <div>
-          <div style={{display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px"}}>
-            <span>Inflation Rate Spurt (%)</span>
-            <strong>7.5%</strong>
-          </div>
-          <input max="15" min="2" style={{width: "100%", accentColor: "#00f2fe"}} type="range" value="7" />
-        </div>
-        <div>
-          <div style={{display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px"}}>
-            <span>Monthly Savings Adjustment</span>
-            <strong>+₹15,000</strong>
-          </div>
-          <input max="50000" min="-20000" style={{width: "100%", accentColor: "#00f2fe"}} type="range" value="15000" />
-        </div>
-      </div>
-    </div>
-    {/* Simulation Output Breakdown */}
-    <div className="dashboard-panel">
-      <div className="panel-header"><div>
-          <span className="panel-label">STRESS OUTCOMES</span>
-          <h3>Scenario Outcomes</h3>
-        </div></div>
-      <div style={{marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px"}}>
-        <div className="simulation-result-preview">
-          <div>
-            <span>Best Case (95th Percentile)</span>
-            <strong style={{color: "#00f2fe"}}>₹49,50,000</strong>
-          </div>
-          <span className="positive">High Growth</span>
-        </div>
-        <div className="simulation-result-preview">
-          <div>
-            <span>Expected Case (50th Percentile)</span>
-            <strong style={{color: "#ffffff"}}>₹38,20,000</strong>
-          </div>
-          <span className="positive">Baseline</span>
-        </div>
-        <div className="simulation-result-preview">
-          <div>
-            <span>Worst Case (5th Percentile)</span>
-            <strong style={{color: "#ff4b4b"}}>₹24,10,000</strong>
-          </div>
-          <span className="expense-text">Stressed</span>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-    </div>
-  );
+import { useEffect, useState } from "react";
+import { useFinance } from "../../context/FinanceContext.jsx";
+import { InsightLayout, MetricCard, Panel, EmptyState, controlStyle, labelStyle, buttonStyle } from "../../components/InsightUI.jsx";
+import { formatINR, projectNetWorth, numeric, phase4Calculations } from "../../utils/phase4Insights.js";
+export default function Page(){
+ const {financeData,calculations,updateSimulationSettings}=useFinance();const c=phase4Calculations(financeData,calculations);
+ const [scenario,setScenario]=useState({name:"Car purchase",monthlyCost:"12000",oneTimeCost:"300000",years:String(financeData.simulationSettings.projectionYears||5),returnRate:String(financeData.simulationSettings.expectedAnnualReturnPercent??financeData.simulationSettings.annualReturnPercent??6)});
+ const [result,setResult]=useState(null);
+ useEffect(()=>{document.body.className="dashboard-page";return()=>{document.body.className=""}},[]);
+ const run=(event)=>{event.preventDefault();const years=Math.max(1,Math.min(50,numeric(scenario.years)||1));const baseline=projectNetWorth(c.netWorth,c.monthlySurplus,scenario.returnRate,years);const changed=projectNetWorth(c.netWorth,c.monthlySurplus,scenario.returnRate,years,scenario.monthlyCost,scenario.oneTimeCost);setResult({baseline,changed,delta:changed.nominal-baseline.nominal,years});updateSimulationSettings({projectionYears:years,expectedAnnualReturnPercent:numeric(scenario.returnRate),lastScenario:{name:scenario.name,monthlyCost:numeric(scenario.monthlyCost),oneTimeCost:numeric(scenario.oneTimeCost),years}});};
+ return <InsightLayout activePage="simulation" eyebrow="SCENARIO PLANNING" title={<>Simulation <span>Lab</span></>} emoji="🧪">
+ <section className="dashboard-summary"><MetricCard label="CURRENT NET WORTH" value={formatINR(c.netWorth)} detail="From your recorded balances" icon="💎"/><MetricCard label="MONTHLY SURPLUS" value={formatINR(c.monthlySurplus)} detail="After expenses and loan payments" icon="💸"/><MetricCard label="BASELINE PROJECTION" value={result?formatINR(result.baseline.nominal):"Run a scenario"} detail="Assumption-based, not a guarantee" icon="🔮"/><MetricCard label="SCENARIO IMPACT" value={result?formatINR(result.delta):"—"} detail="Difference from baseline" icon="📉"/></section>
+ <section className="dashboard-grid"><Panel eyebrow="CUSTOM SCENARIO" title="What would change if…"><form onSubmit={run} style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
+ <div style={{gridColumn:"1 / -1"}}><label style={labelStyle}>Scenario name</label><input style={controlStyle} value={scenario.name} onChange={e=>setScenario({...scenario,name:e.target.value})} required maxLength={60}/></div>
+ <div><label style={labelStyle}>Additional monthly cost (₹)</label><input style={controlStyle} type="number" min="0" step="100" value={scenario.monthlyCost} onChange={e=>setScenario({...scenario,monthlyCost:e.target.value})} required/></div>
+ <div><label style={labelStyle}>One-time upfront cost (₹)</label><input style={controlStyle} type="number" min="0" step="1000" value={scenario.oneTimeCost} onChange={e=>setScenario({...scenario,oneTimeCost:e.target.value})} required/></div>
+ <div><label style={labelStyle}>Projection horizon (years)</label><input style={controlStyle} type="number" min="1" max="50" value={scenario.years} onChange={e=>setScenario({...scenario,years:e.target.value})} required/></div>
+ <div><label style={labelStyle}>Assumed annual return (%)</label><input style={controlStyle} type="number" min="-20" max="30" step="0.5" value={scenario.returnRate} onChange={e=>setScenario({...scenario,returnRate:e.target.value})} required/></div>
+ <div style={{gridColumn:"1 / -1"}}><button style={buttonStyle} type="submit">Run simulation →</button></div>
+ </form></Panel>
+ <Panel eyebrow="RESULT" title={result?`${scenario.name} · ${result.years} years`:"Compare before you commit"}>{result?<><div className="simulation-result-preview"><div><span>Baseline projected net worth</span><strong>{formatINR(result.baseline.nominal)}</strong></div></div><div className="simulation-result-preview"><div><span>With this scenario</span><strong>{formatINR(result.changed.nominal)}</strong></div></div><div className="simulation-result-preview"><div><span>Estimated difference</span><strong style={{color:result.delta<0?"#b65d5d":"#299565"}}>{formatINR(result.delta)}</strong></div></div><p style={{fontSize:12,color:"#66778a",lineHeight:1.6,marginTop:12}}>This simplified projection assumes monthly surplus remains constant and applies the selected return monthly. It excludes taxes, fees, changing income, and market volatility.</p></>:<EmptyState title="No simulation run yet" detail="Enter the cost and time horizon to compare a scenario with your current financial trajectory." link="/finances"/>}</Panel></section>
+ </InsightLayout>;
 }
-
-export default Page;
